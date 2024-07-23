@@ -1,73 +1,100 @@
-import 'dotenv/config';
-import express from 'express';
 import {InteractionResponseType, InteractionType,} from 'discord-interactions';
-import {VerifyDiscordRequest} from './utils.js';
-import {cleanWithdrawedNumbers, getRandom100Number, getWithdrawedNumbers, print} from './game.js';
-
-// Create an express app
-const app = express();
-// Get port, or default to 3000
-const PORT = process.env.PORT || 3000;
-// Parse request body and verifies incoming requests using discord-interactions package
-app.use(express.json({ verify: VerifyDiscordRequest(process.env.PUBLIC_KEY) }));
-
-// Store for in-progress games. In production, you'd want to use a DB
-const activeGames = {};
+import {cleanWithdrawedNumbers, getRandom100Number, getWithdrawedNumbers, print} from './core.js';
+import {AutoRouter} from 'itty-router';
+import {CLEAR, PRINT, TIRAJ} from './commands.js';
+import {verifyDiscordRequest} from "./utils.js";
 
 /**
- * Interactions endpoint URL where Discord will send HTTP requests
+ * The core server that runs on a Cloudflare worker.
  */
-app.post('/interactions', async function (req, res) {
-  // Interaction type and data
-  const { type, id, data } = req.body;
 
-  /**
-   * Handle verification requests
-   */
-  if (type === InteractionType.PING) {
-    return res.send({ type: InteractionResponseType.PONG });
+class JsonResponse extends Response {
+  constructor(body, init) {
+    const jsonBody = JSON.stringify(body);
+    init = init || {
+      headers: {
+        'content-type': 'application/json;charset=UTF-8',
+      },
+    };
+    super(jsonBody, init);
   }
+}
 
-  /**
-   * Handle slash command requests
-   * See https://discord.com/developers/docs/interactions/application-commands#slash-commands
-   */
-  if (type === InteractionType.APPLICATION_COMMAND) {
-    const { name } = data;
+const router = AutoRouter();
 
-    if (name === 'tiraj') {
-      const withdrawedNumbers = getWithdrawedNumbers()
-      return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          // Fetches a random emoji to send from a helper function
-          content: `🎲 **${getRandom100Number()}** - Chiffres déjà tirés : [${withdrawedNumbers}]`,
-        },
-      });
-    }
-
-    if (name === 'clear') {
-      console.log('clearing all withdrawed numbers...')
-      cleanWithdrawedNumbers();
-      return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          content: `**Tiraj** remis à zéro`
-        }
-      })
-    }
-
-    if (name === 'print') {
-      return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          content: print()
-        }
-      })
-    }
-  }
+/**
+ * A simple :wave: hello page to verify the worker is working.
+ */
+router.get('/', (request, env) => {
+  return new Response(`👋 ${env.DISCORD_APPLICATION_ID}`);
 });
 
-app.listen(PORT, () => {
-  console.log('Listening on port', PORT);
+/**
+ * Main route for all requests sent from Discord.  All incoming messages will
+ * include a JSON payload described here:
+ * https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object
+ */
+router.post('/interactions', async (request, env) => {
+  const { isValid, interaction } = await server.verifyDiscordRequest(
+      request,
+      env,
+  );
+  if (!isValid || !interaction) {
+    return new Response('Bad request signature.', { status: 401 });
+  }
+
+  if (interaction.type === InteractionType.PING) {
+    // The `PING` message is used during the initial webhook handshake, and is
+    // required to configure the webhook in the developer portal.
+    return new JsonResponse({
+      type: InteractionResponseType.PONG,
+    });
+  }
+
+  if (interaction.type === InteractionType.APPLICATION_COMMAND) {
+    switch (interaction.data.name.toLowerCase()) {
+      case PRINT.name.toLowerCase(): {
+        return new JsonResponse({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: print()
+          }
+        })
+      }
+      case CLEAR.name.toLowerCase(): {
+        console.log('clearing all withdrawed numbers...')
+        cleanWithdrawedNumbers();
+        return new JsonResponse({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: `**Tiraj** remis à zéro`
+          }
+        })
+      }
+      case TIRAJ.name.toLowerCase(): {
+        const withdrawedNumbers = getWithdrawedNumbers()
+        return new JsonResponse({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            // Fetches a random emoji to send from a helper function
+            content: `🎲 **${getRandom100Number()}** - Chiffres déjà tirés : [${withdrawedNumbers}]`,
+          },
+        });
+      }
+      default:
+        return new JsonResponse({ error: 'Unknown Type' }, { status: 400 });
+    }
+  }
+
+  console.error('Unknown Type');
+  return new JsonResponse({ error: 'Unknown Type' }, { status: 400 });
 });
+
+router.all('*', () => new Response('Not Found.', { status: 404 }));
+
+const server = {
+  verifyDiscordRequest,
+  fetch: router.fetch,
+};
+
+export default server;

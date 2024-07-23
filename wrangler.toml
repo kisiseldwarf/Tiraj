@@ -1,0 +1,4 @@
+# Top-level configuration
+name = "tiraj"
+main = "app.js"
+compatibility_date = "2022-07-12"
