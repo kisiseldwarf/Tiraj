@@ -12,7 +12,7 @@ export const CLEAR = {
 
 export const PRINT = {
   name: 'print',
-  description: 'Affiche les jets retirés, et les valeurs encore possible de tirer',
+  description: 'Affiche les jets retirés',
   type: 1
 }
 

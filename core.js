@@ -1,7 +1,7 @@
 let withdrawedNumbers = [];
 let allNumbers = Array.from({length: 100}, (v,k) => k+1)
 
-export function print() {
+export function printWithdrawedNumbers() {
   if (withdrawedNumbers.length === 0) {
     return 'Aucun chiffre retiré'
   }

@@ -1,5 +1,5 @@
 import {InteractionResponseType, InteractionType,} from 'discord-interactions';
-import {cleanWithdrawedNumbers, getRandom100Number, getWithdrawedNumbers, print} from './core.js';
+import {cleanWithdrawedNumbers, getRandom100Number, getWithdrawedNumbers, printWithdrawedNumbers} from './core.js';
 import {AutoRouter} from 'itty-router';
 import {CLEAR, PRINT, TIRAJ} from './commands.js';
 import {verifyDiscordRequest} from "./utils.js";
@@ -57,7 +57,7 @@ router.post('/interactions', async (request, env) => {
         return new JsonResponse({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
-            content: print()
+            content: printWithdrawedNumbers()
           }
         })
       }
@@ -76,7 +76,6 @@ router.post('/interactions', async (request, env) => {
         return new JsonResponse({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
-            // Fetches a random emoji to send from a helper function
             content: `🎲 **${getRandom100Number()}** - Chiffres déjà tirés : [${withdrawedNumbers}]`,
           },
         });
