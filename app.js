@@ -1,14 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
-import {
-  InteractionType,
-  InteractionResponseType,
-  InteractionResponseFlags,
-  MessageComponentTypes,
-  ButtonStyleTypes,
-} from 'discord-interactions';
-import { VerifyDiscordRequest, getRandomEmoji, DiscordRequest } from './utils.js';
-import { getShuffledOptions, getResult } from './game.js';
+import {InteractionResponseType, InteractionType,} from 'discord-interactions';
+import {VerifyDiscordRequest} from './utils.js';
+import {cleanWithdrawedNumbers, getRandom100Number, getWithdrawedNumbers, print} from './game.js';
 
 // Create an express app
 const app = express();
@@ -41,16 +35,35 @@ app.post('/interactions', async function (req, res) {
   if (type === InteractionType.APPLICATION_COMMAND) {
     const { name } = data;
 
-    // "test" command
-    if (name === 'test') {
-      // Send a message into the channel where command was triggered from
+    if (name === 'tiraj') {
+      const withdrawedNumbers = getWithdrawedNumbers()
       return res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
           // Fetches a random emoji to send from a helper function
-          content: 'hello world ' + getRandomEmoji(),
+          content: `🎲 **${getRandom100Number()}** - Chiffres déjà tirés : [${withdrawedNumbers}]`,
         },
       });
+    }
+
+    if (name === 'clear') {
+      console.log('clearing all withdrawed numbers...')
+      cleanWithdrawedNumbers();
+      return res.send({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: `**Tiraj** remis à zéro`
+        }
+      })
+    }
+
+    if (name === 'print') {
+      return res.send({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: print()
+        }
+      })
     }
   }
 });
