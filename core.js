@@ -20,7 +20,7 @@ export function getWithdrawedNumbers() {
   return withdrawedNumbers;
 }
 
-export function cleanWithdrawedNumbers() {
+export function resetTiraj() {
   withdrawedNumbers = [];
   allNumbers = Array.from({length: 100}, (v,k) => k+1)
 }

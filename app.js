@@ -1,5 +1,5 @@
 import {InteractionResponseType, InteractionType,} from 'discord-interactions';
-import {cleanWithdrawedNumbers, getRandom100Number, getWithdrawedNumbers, printWithdrawedNumbers} from './core.js';
+import {resetTiraj, getRandom100Number, getWithdrawedNumbers, printWithdrawedNumbers} from './core.js';
 import {AutoRouter} from 'itty-router';
 import {CLEAR, PRINT, TIRAJ} from './commands.js';
 import {verifyDiscordRequest} from "./utils.js";
@@ -63,7 +63,7 @@ router.post('/interactions', async (request, env) => {
       }
       case CLEAR.name.toLowerCase(): {
         console.log('clearing all withdrawed numbers...')
-        cleanWithdrawedNumbers();
+        resetTiraj();
         return new JsonResponse({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
@@ -72,7 +72,7 @@ router.post('/interactions', async (request, env) => {
         })
       }
       case TIRAJ.name.toLowerCase(): {
-        const withdrawedNumbers = getWithdrawedNumbers()
+        const withdrawedNumbers = [].concat(getWithdrawedNumbers())
         return new JsonResponse({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
