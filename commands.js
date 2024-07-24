@@ -4,16 +4,28 @@ export const TIRAJ = {
   type: 1
 }
 
-export const CLEAR = {
-  name: 'clear',
+export const CLEARAJ = {
+  name: 'clearaj',
   description: 'Supprime les dès déjà tirés, reset Tiraj a zéro',
   type: 1
 }
 
-export const PRINT = {
-  name: 'print',
+export const PRINTAJ = {
+  name: 'printaj',
   description: 'Affiche les jets retirés',
   type: 1
 }
 
-export const ALL_COMMANDS = [TIRAJ, CLEAR, PRINT];
+export const GARDAJ = {
+  name: 'gardaj',
+  description: 'Fait un tiraj mais garde le dés de côté pour l\'utilisateur',
+  type: 1
+}
+
+export const PUGARDAJ = {
+  name: 'pugardaj',
+  description: 'Supprime tous les dès gardés par l\'utilisateur',
+  type: 1
+}
+
+export const ALL_COMMANDS = [TIRAJ, CLEARAJ, PRINTAJ, GARDAJ, PUGARDAJ];

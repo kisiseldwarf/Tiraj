@@ -1,7 +1,7 @@
 import {InteractionResponseType, InteractionType,} from 'discord-interactions';
-import {resetTiraj, getRandom100Number, getWithdrawedNumbers, printWithdrawedNumbers} from './core.js';
+import {resetTiraj, tiraj, getWithdrawedNumbers, printWithdrawedNumbers, gardaj, printTiraj, resetGardaj} from './core.js';
 import {AutoRouter} from 'itty-router';
-import {CLEAR, PRINT, TIRAJ} from './commands.js';
+import {CLEARAJ, GARDAJ, PRINTAJ, PUGARDAJ, TIRAJ} from './commands.js';
 import {verifyDiscordRequest} from "./utils.js";
 
 /**
@@ -53,15 +53,15 @@ router.post('/interactions', async (request, env) => {
 
   if (interaction.type === InteractionType.APPLICATION_COMMAND) {
     switch (interaction.data.name.toLowerCase()) {
-      case PRINT.name.toLowerCase(): {
+      case PRINTAJ.name.toLowerCase(): {
         return new JsonResponse({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
-            content: printWithdrawedNumbers()
+            content: printTiraj()
           }
         })
       }
-      case CLEAR.name.toLowerCase(): {
+      case CLEARAJ.name.toLowerCase(): {
         console.log('clearing all withdrawed numbers...')
         resetTiraj();
         return new JsonResponse({
@@ -72,13 +72,33 @@ router.post('/interactions', async (request, env) => {
         })
       }
       case TIRAJ.name.toLowerCase(): {
-        const withdrawedNumbers = [].concat(getWithdrawedNumbers())
         return new JsonResponse({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
-            content: `🎲 **${getRandom100Number()}** - Chiffres déjà tirés : [${withdrawedNumbers}]`,
+            content: `🎲 **${tiraj()}** \n${printTiraj()}`,
           },
         });
+      }
+      case GARDAJ.name.toLowerCase(): {
+        const username = interaction.member.nick || interaction.member.user.global_name;
+        const userId = interaction.member.user.id;
+        return new JsonResponse({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content:  `🎲 **${gardaj(username, userId)}** \n${printTiraj()}`
+          }
+        })
+      }
+      case PUGARDAJ.name.toLowerCase(): {
+        const userId = interaction.member.user.id;
+        const username = interaction.member.nick || interaction.member.user.global_name;
+        resetGardaj(userId);
+        return new JsonResponse({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content:  `**${username}** remis à zéro \n${printTiraj()}`
+          }
+        })
       }
       default:
         return new JsonResponse({ error: 'Unknown Type' }, { status: 400 });
